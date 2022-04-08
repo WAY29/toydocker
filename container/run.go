@@ -32,13 +32,15 @@ func newParentProcess(ttyFlag, interactiveFlag bool, commandArray []string) (*ex
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Cloneflags: syscall.CLONE_NEWUTS | syscall.CLONE_NEWIPC | syscall.CLONE_NEWPID | syscall.CLONE_NEWNS | syscall.CLONE_NEWNET,
 	}
-	cmd.ExtraFiles = []*os.File{readPipe}
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
 	if interactiveFlag {
 		cmd.Stdin = os.Stdin
 	}
+
+	cmd.Dir = BUSYBOX_IMAGE_DIR
+	cmd.ExtraFiles = []*os.File{readPipe}
 
 	return cmd, writePipe
 }
