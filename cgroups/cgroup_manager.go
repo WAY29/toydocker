@@ -1,7 +1,7 @@
 package cgroups
 
 import (
-	"github.com/WAY29/toydocker/cgroup/subsystems"
+	"github.com/WAY29/toydocker/cgroups/subsystems"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -42,7 +42,6 @@ func (c *CgroupManager) Set(res *subsystems.ResourceConfig) error {
 
 //释放cgroup
 func (c *CgroupManager) Destroy() error {
-	log.Infoln("cgroup destroy")
 	for _, subSysIns := range subsystems.SubsystemsIns {
 		if err := subSysIns.Remove(c.Path); err != nil {
 			log.Warnf("remove cgroup fail %v", err)

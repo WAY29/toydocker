@@ -1,3 +1,6 @@
 package container
 
-const BUSYBOX_IMAGE_DIR = "/root/coding/golang/src/toydocker/images/busybox"
+const (
+	ROOT_PATH = "/tmp/toydocker"
+	MNT_PATH  = "/tmp/toydocker/mnt"
+)
