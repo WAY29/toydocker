@@ -1,5 +1,17 @@
 # toydocker
+***参考书籍: 自己动手写Docker***
+
+运行在以下环境下
+```
+uname -a
+Linux vps 5.4.0-77-generic #86-Ubuntu SMP Thu Jun 17 02:35:03 UTC 2021 x86_64 x86_64 x86_64 GNU/Linux
+cat /etc/issue
+Ubuntu 20.04 LTS
+```
 请运行在linux环境下, 运行前可以修改container/config.go里的配置
+
+## build
+go build .
 
 
 ## run
