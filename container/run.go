@@ -6,8 +6,10 @@ import (
 	"strings"
 	"syscall"
 
-	cgroups "github.com/WAY29/toydocker/cgroup"
-	"github.com/WAY29/toydocker/cgroup/subsystems"
+	"github.com/WAY29/toydocker/cgroups"
+	"github.com/WAY29/toydocker/cgroups/subsystems"
+	"github.com/WAY29/toydocker/structs"
+	"github.com/google/uuid"
 	_ "github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 )
@@ -39,20 +41,25 @@ func newParentProcess(ttyFlag, interactiveFlag bool, commandArray []string) (*ex
 		cmd.Stdin = os.Stdin
 	}
 
-	cmd.Dir = BUSYBOX_IMAGE_DIR
+	// cmd.Dir = BUSYBOX_IMAGE_DIR
 	cmd.ExtraFiles = []*os.File{readPipe}
 
 	return cmd, writePipe
 }
 
-func Run(tty, interactive bool, commandArray []string, resource *subsystems.ResourceConfig) {
-	parent, writePipe := newParentProcess(tty, interactive, commandArray)
-	// 创建cgroup manager，并调用set和apply设置资源限制
-	// uuid := uuid.New().String()
-	uuid := "my-cgroup"
-	log.Infof("cgroup name %s", uuid)
+func Run(cmdConfig *structs.CmdConfig, commandArray []string, resource *subsystems.ResourceConfig) {
+	parent, writePipe := newParentProcess(cmdConfig.Tty, cmdConfig.Interactive, commandArray)
 
-	cgroupManager := cgroups.NewCgroupManager(uuid)
+	containerName := uuid.New().String()
+	log.Infof("containter name: %s", containerName)
+	// 创建workspace
+	mntPath := newWorkSpace(ROOT_PATH, MNT_PATH, cmdConfig.ImagePath, containerName)
+	defer deleteWorkSpace(ROOT_PATH, mntPath, containerName)
+	// 设置新的文件系统根目录
+	parent.Dir = mntPath
+
+	// 创建cgroup manager，并调用set和apply设置资源限制
+	cgroupManager := cgroups.NewCgroupManager(containerName)
 	defer cgroupManager.Destroy()
 	// 设置cgroup资源限制
 	cgroupManager.Set(resource)
@@ -63,13 +70,18 @@ func Run(tty, interactive bool, commandArray []string, resource *subsystems.Reso
 	}
 	log.Infof("pid %d", parent.Process.Pid)
 
-	// 添加pid到cgroup
+	// 添加pid到cgroup,使用资源限制
 	cgroupManager.Apply(parent.Process.Pid)
 
+	// 设置命令参数
 	sendInitCommand(commandArray, writePipe)
+
+	// 等待进程
 	parent.Wait()
+
 }
 
+// 使用管道传输命令参数
 func sendInitCommand(comArray []string, writePipe *os.File) {
 	command := strings.Join(comArray, " ")
 	log.Infof("command all is %s", command)
