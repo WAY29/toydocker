@@ -1,12 +1,12 @@
 # toydocker
-请运行在linux环境下, 运行前请修改container/config.go里的BUSYBOX_IMAGE_DIR，改为busybox镜像的绝对路径(images/busybox)
+请运行在linux环境下, 运行前可以修改container/config.go里的配置
 
 
 ## run
 ### example
 ```bash
 # 执行命令
-toydocker run -t bash
+toydocker run -t -p ./images/busybox.tar bash
 # 执行命令携带参数
-toydocker run -t -- ls -al
+toydocker run -t -p ./images/busybox.tar -- ls -al
 ```
