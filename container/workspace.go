@@ -14,20 +14,36 @@ import (
 )
 
 //Create a AUFS filesystem as container root workspace
-func newWorkSpace(rootPath, mntRootPath, ImagePath, containerName string) string {
+func newWorkSpace(rootPath, ImagePath, containerName string) string {
+	mntRootPath := path.Join(rootPath, "mnt")
+	imageRootPath := path.Join(rootPath, "images")
+	writeLayerRootPath := path.Join(rootPath, "write-layers")
+
 	if err := os.MkdirAll(rootPath, 0777); err != nil {
 		logrus.Error("Mkdir %s error: %v", rootPath, err)
 		cli.Exit(1)
 	}
+	if err := os.MkdirAll(mntRootPath, 0777); err != nil {
+		logrus.Error("Mkdir %s error: %v", mntRootPath, err)
+		cli.Exit(1)
+	}
+	if err := os.MkdirAll(imageRootPath, 0777); err != nil {
+		logrus.Error("Mkdir %s error: %v", imageRootPath, err)
+		cli.Exit(1)
+	}
+	if err := os.MkdirAll(writeLayerRootPath, 0777); err != nil {
+		logrus.Error("Mkdir %s error: %v", writeLayerRootPath, err)
+		cli.Exit(1)
+	}
 
-	readonlyLayerPath := createReadOnlyLayer(rootPath, ImagePath)
-	writeLayerPath := createWriteLayer(rootPath, containerName)
+	readonlyLayerPath := createReadOnlyLayer(imageRootPath, ImagePath)
+	writeLayerPath := createWriteLayer(writeLayerRootPath, containerName)
 	mntPath := createMountPoint(rootPath, mntRootPath, readonlyLayerPath, writeLayerPath, containerName)
 
 	return mntPath
 }
 
-func createReadOnlyLayer(rootPath, ImagePath string) string {
+func createReadOnlyLayer(imageRootPath, ImagePath string) string {
 	// 判断镜像是否存在
 	exist, err := utils.PathExists(ImagePath)
 	if err != nil {
@@ -44,7 +60,7 @@ func createReadOnlyLayer(rootPath, ImagePath string) string {
 		cli.Exit(1)
 	}
 
-	ImageDecompressionPath := path.Join(rootPath, "image-readonlyLayer-"+iamgeHash)
+	ImageDecompressionPath := path.Join(imageRootPath, iamgeHash)
 	exist, err = utils.PathExists(ImageDecompressionPath)
 	if err != nil {
 		logrus.Error(err)
@@ -77,8 +93,8 @@ func createReadOnlyLayer(rootPath, ImagePath string) string {
 	return ImageDecompressionPath
 }
 
-func createWriteLayer(rootPath, containerName string) string {
-	writeLayerPath := path.Join(rootPath, "writeLayer-"+containerName)
+func createWriteLayer(writeLayerRootPath, containerName string) string {
+	writeLayerPath := path.Join(writeLayerRootPath, containerName)
 	if err := os.Mkdir(writeLayerPath, 0777); err != nil {
 		logrus.Error("Mkdir %s error: %v", writeLayerPath, err)
 		cli.Exit(1)
@@ -123,7 +139,7 @@ func deleteMountPoint(rootPath string, mntPath string) {
 }
 
 func deleteWriteLayer(rootPath, containerName string) {
-	writeLayerPath := path.Join(rootPath, "writeLayer-"+containerName)
+	writeLayerPath := path.Join(rootPath, "write-layers", containerName)
 
 	if err := os.RemoveAll(writeLayerPath); err != nil {
 		log.Errorf("Remove dir %s error %v", writeLayerPath, err)

@@ -31,6 +31,7 @@ func (s *MemorySubSystem) GetCgroupPath(subsystem string, cgroupPath string, aut
 // 设置某个cgroup在这个subsystem中的资源限制
 func (s *MemorySubSystem) Set(cgroupPath string, res *ResourceConfig) error {
 	if subsysCgroupPath, err := s.GetCgroupPath(s.Name(), cgroupPath, true); err == nil {
+		// 禁用oom，防止oom kill掉用于压测的stress进程
 		if err := ioutil.WriteFile(path.Join(subsysCgroupPath, "memory.oom_control"), []byte("1"), 0644); err != nil {
 			return fmt.Errorf("set cgroup memory.oom_control error: %v", err)
 		}

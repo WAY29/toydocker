@@ -53,7 +53,7 @@ func Run(cmdConfig *structs.CmdConfig, commandArray []string, resource *subsyste
 	containerName := uuid.New().String()
 	log.Infof("containter name: %s", containerName)
 	// 创建workspace
-	mntPath := newWorkSpace(ROOT_PATH, MNT_PATH, cmdConfig.ImagePath, containerName)
+	mntPath := newWorkSpace(ROOT_PATH, cmdConfig.ImagePath, containerName)
 	defer deleteWorkSpace(ROOT_PATH, mntPath, containerName)
 	// 设置新的文件系统根目录
 	parent.Dir = mntPath
