@@ -38,13 +38,13 @@ func FileHash(filepath string) (string, error) {
 }
 
 // 系统命令实现的untar
-func BadUntar(tarFilePath, decompressionPath string) error {
+func Untar(tarFilePath, decompressionPath string) error {
 	_, err := exec.Command("tar", "-xvf", tarFilePath, "-C", decompressionPath).CombinedOutput()
 	return err
 }
 
 // go实现的untar，可能存在bug
-func Untar(tarFilePath, decompressionPath string) error {
+func BadUntar(tarFilePath, decompressionPath string) error {
 	file, err := os.Open(tarFilePath)
 
 	if err != nil {
