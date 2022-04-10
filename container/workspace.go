@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"strings"
 	"syscall"
 
 	"github.com/WAY29/toydocker/utils"
@@ -14,31 +15,36 @@ import (
 )
 
 //Create a AUFS filesystem as container root workspace
-func newWorkSpace(rootPath, ImagePath, containerName string) string {
+func newWorkSpace(rootPath, ImagePath, containerName string, volumes []string) string {
 	mntRootPath := path.Join(rootPath, "mnt")
 	imageRootPath := path.Join(rootPath, "images")
 	writeLayerRootPath := path.Join(rootPath, "write-layers")
+	volumeRootPath := path.Join(rootPath, "volumes")
 
-	if err := os.MkdirAll(rootPath, 0777); err != nil {
+	if err := os.MkdirAll(rootPath, 0777); err != nil && !os.IsExist(err) {
 		logrus.Error("Mkdir %s error: %v", rootPath, err)
 		cli.Exit(1)
 	}
-	if err := os.MkdirAll(mntRootPath, 0777); err != nil {
+	if err := os.MkdirAll(mntRootPath, 0777); err != nil && !os.IsExist(err) {
 		logrus.Error("Mkdir %s error: %v", mntRootPath, err)
 		cli.Exit(1)
 	}
-	if err := os.MkdirAll(imageRootPath, 0777); err != nil {
+	if err := os.MkdirAll(imageRootPath, 0777); err != nil && !os.IsExist(err) {
 		logrus.Error("Mkdir %s error: %v", imageRootPath, err)
 		cli.Exit(1)
 	}
-	if err := os.MkdirAll(writeLayerRootPath, 0777); err != nil {
+	if err := os.MkdirAll(writeLayerRootPath, 0777); err != nil && !os.IsExist(err) {
 		logrus.Error("Mkdir %s error: %v", writeLayerRootPath, err)
 		cli.Exit(1)
 	}
-
+	if err := os.MkdirAll(volumeRootPath, 0777); err != nil && !os.IsExist(err) {
+		logrus.Error("Mkdir %s error: %v", volumeRootPath, err)
+		cli.Exit(1)
+	}
 	readonlyLayerPath := createReadOnlyLayer(imageRootPath, ImagePath)
 	writeLayerPath := createWriteLayer(writeLayerRootPath, containerName)
 	mntPath := createMountPoint(rootPath, mntRootPath, readonlyLayerPath, writeLayerPath, containerName)
+	createVolumes(mntPath, volumes)
 
 	return mntPath
 }
@@ -111,24 +117,68 @@ func createMountPoint(rootPath, mntRootPath, readonlyLayerPath, writeLayerPath, 
 	}
 
 	syscall.Mount("", "/", "", syscall.MS_PRIVATE|syscall.MS_REC, "")
-	defaultMountFlags := syscall.MS_NODEV
-	if err := syscall.Mount("none", mntPath, "aufs", uintptr(defaultMountFlags), fmt.Sprintf("dirs=%s:%s", writeLayerPath, readonlyLayerPath)); err != nil {
-		logrus.Error("Mkdir %s error: %v", mntPath, err)
+	if err := syscall.Mount("none", mntPath, "aufs", uintptr(syscall.MS_NODEV), fmt.Sprintf("dirs=%s:%s", writeLayerPath, readonlyLayerPath)); err != nil {
+		logrus.Error("Mount %s error: %v", mntPath, err)
 		cli.Exit(1)
 	}
 
 	return mntPath
 }
 
+func createVolumes(mntPath string, volumes []string) {
+	if len(volumes) == 0 {
+		return
+	}
+
+	for _, volume := range volumes {
+		volumeURLS, ok := volumeURLExtract(volume)
+		if !ok {
+			logrus.Warningf("Volume parameter[%s] input is invalid", volume)
+		} else {
+			mountVolume(mntPath, volumeURLS)
+			logrus.Infof("Mount volume %s", volume)
+
+		}
+	}
+}
+
+func volumeURLExtract(volume string) ([]string, bool) {
+	volumeURLS := strings.Split(volume, ":")
+	if len(volumeURLS) == 2 && volumeURLS[0] != "" && volumeURLS[1] != "" {
+		return volumeURLS, true
+	}
+	return nil, false
+}
+
+func mountVolume(mntPath string, volumeURLS []string) {
+	parentPath := volumeURLS[0]
+	if err := os.Mkdir(parentPath, 0777); err != nil && !os.IsExist(err) {
+		logrus.Errorf("Mkdir parent dir %s error: %v", parentPath, err)
+		cli.Exit(1)
+	}
+	containerVolumePath := path.Join(mntPath, volumeURLS[1])
+	if err := os.Mkdir(containerVolumePath, 0777); err != nil && !os.IsExist(err) {
+		logrus.Error("Mkdir container dir %s error: %v", containerVolumePath, err)
+		cli.Exit(1)
+	}
+
+	syscall.Mount("", "/", "", syscall.MS_PRIVATE|syscall.MS_REC, "")
+	if err := syscall.Mount("none", containerVolumePath, "aufs", uintptr(syscall.MS_NODEV), fmt.Sprintf("dirs=%s", parentPath)); err != nil {
+		logrus.Error("Mount %s error: %v", containerVolumePath, err)
+		cli.Exit(1)
+	}
+}
+
 //Delete the AUFS filesystem while container exit
-func deleteWorkSpace(rootPath, mntPath, containerName string) {
+func deleteWorkSpace(rootPath, mntPath, containerName string, volumes []string) {
+	deleteVolumes(mntPath, volumes)
 	deleteMountPoint(rootPath, mntPath)
 	deleteWriteLayer(rootPath, containerName)
 }
 
 func deleteMountPoint(rootPath string, mntPath string) {
 	if err := syscall.Unmount(mntPath, 0); err != nil {
-		logrus.Error(err)
+		logrus.Errorf("Unmount %s error: %v", mntPath, err)
 		cli.Exit(1)
 	}
 
@@ -143,5 +193,23 @@ func deleteWriteLayer(rootPath, containerName string) {
 
 	if err := os.RemoveAll(writeLayerPath); err != nil {
 		log.Errorf("Remove dir %s error %v", writeLayerPath, err)
+	}
+}
+
+func deleteVolumes(mntPath string, volumes []string) {
+	if len(volumes) == 0 {
+		return
+	}
+
+	for _, volume := range volumes {
+		volumeURLS, ok := volumeURLExtract(volume)
+		if !ok {
+			continue
+		}
+		unmountPath := path.Join(mntPath, volumeURLS[1])
+
+		if err := syscall.Unmount(unmountPath, 0); err != nil {
+			logrus.Errorf("Unmount %s error: %v", unmountPath, err)
+		}
 	}
 }

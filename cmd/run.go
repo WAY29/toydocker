@@ -14,14 +14,15 @@ func CmdRun(cmd *cli.Cmd) {
 		memory      = cmd.StringOpt("m memory", "1024m", "memory limit")
 		cpushare    = cmd.StringOpt("cpushare", "1024", "cpushare limit")
 		cpuset      = cmd.StringOpt("cpuset", "2", "cpuset limit")
-		ImagePath   = cmd.StringOpt("p path", "./images/busybox.tar", "Specifies the path of the image")
+		imagePath   = cmd.StringOpt("p path", "./images/busybox.tar", "Specifies the path of the image")
+		volume      = cmd.StringsOpt("v volume", []string{}, "Bind mount a volume")
 	)
 
 	var (
 		command = cmd.StringsArg("COMMAND", []string{}, "command to run")
 	)
 
-	cmd.Spec = "[-t | --tty] [-i | --interactive] [-m=<memory limit> | --memory=<memory limit>] [--cpushare=<cpushare limit>] [--cpuset=<cpuset limit>] (-p=<image path> | --path=<iamge path>) COMMAND..."
+	cmd.Spec = "[-t | --tty] [-i | --interactive] [-m=<memory limit> | --memory=<memory limit>] [--cpushare=<cpushare limit>] [--cpuset=<cpuset limit>] [-v | --volume]... (-p=<image path> | --path=<iamge path>) COMMAND..."
 
 	cmd.Action = func() {
 		resource := &subsystems.ResourceConfig{
@@ -33,7 +34,8 @@ func CmdRun(cmd *cli.Cmd) {
 		cmdConfig := &structs.CmdConfig{
 			Tty:         *tty,
 			Interactive: *interactive,
-			ImagePath:   *ImagePath,
+			ImagePath:   *imagePath,
+			Volume:      *volume,
 		}
 
 		container.Run(cmdConfig, *command, resource)
