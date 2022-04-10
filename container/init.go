@@ -10,14 +10,14 @@ import (
 	"syscall"
 
 	cli "github.com/jawher/mow.cli"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 func readUserCommand() []string {
 	pipe := os.NewFile(uintptr(3), "pipe")
 	msg, err := ioutil.ReadAll(pipe)
 	if err != nil {
-		log.Errorf("init read pipe error %v", err)
+		logrus.Errorf("init read pipe error %v", err)
 		return nil
 	}
 	msgStr := string(msg)
@@ -39,12 +39,12 @@ func RunContainerInitProcess() error {
 	if binary, err := exec.LookPath(argv[0]); err == nil {
 		argv[0] = binary
 	} else {
-		log.Error(err)
+		logrus.Error(err)
 		cli.Exit(1)
 	}
 
 	if err = syscall.Exec(argv[0], argv, []string{}); err != nil {
-		log.Error(err)
+		logrus.Error(err)
 	}
 	return nil
 
@@ -54,10 +54,10 @@ func RunContainerInitProcess() error {
 func setUpMount() {
 	pwd, err := os.Getwd()
 	if err != nil {
-		log.Errorf("Get current location error %v", err)
+		logrus.Errorf("Get current location error: %v", err)
 		return
 	}
-	log.Infof("Current location is %s", pwd)
+	logrus.Infof("Current location is %s", pwd)
 	pivotRoot(pwd)
 
 	//mount proc

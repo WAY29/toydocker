@@ -37,9 +37,15 @@ func FileHash(filepath string) (string, error) {
 	return fmt.Sprintf("%Xn", sum), nil
 }
 
+// 系统命令实现的tar
+func Tar(dirPath, outputPath string) error {
+	_, err := exec.Command("tar", "-cf", outputPath, "-C", dirPath, ".").CombinedOutput()
+	return err
+}
+
 // 系统命令实现的untar
 func Untar(tarFilePath, decompressionPath string) error {
-	_, err := exec.Command("tar", "-xvf", tarFilePath, "-C", decompressionPath).CombinedOutput()
+	_, err := exec.Command("tar", "-xf", tarFilePath, "-C", decompressionPath).CombinedOutput()
 	return err
 }
 
@@ -113,7 +119,6 @@ func BadUntar(tarFilePath, decompressionPath string) error {
 		default:
 			return fmt.Errorf("Unknown file[%s] type: %c", filepath, header.Typeflag)
 		}
-
 	}
 
 	return nil

@@ -11,11 +11,10 @@ import (
 	"github.com/WAY29/toydocker/utils"
 	cli "github.com/jawher/mow.cli"
 	"github.com/sirupsen/logrus"
-	log "github.com/sirupsen/logrus"
 )
 
 //Create a AUFS filesystem as container root workspace
-func newWorkSpace(rootPath, ImagePath, containerName string, volumes []string) string {
+func newWorkSpace(rootPath, ImagePath, containerID string, volumes []string) string {
 	mntRootPath := path.Join(rootPath, "mnt")
 	imageRootPath := path.Join(rootPath, "images")
 	writeLayerRootPath := path.Join(rootPath, "write-layers")
@@ -42,8 +41,8 @@ func newWorkSpace(rootPath, ImagePath, containerName string, volumes []string) s
 		cli.Exit(1)
 	}
 	readonlyLayerPath := createReadOnlyLayer(imageRootPath, ImagePath)
-	writeLayerPath := createWriteLayer(writeLayerRootPath, containerName)
-	mntPath := createMountPoint(rootPath, mntRootPath, readonlyLayerPath, writeLayerPath, containerName)
+	writeLayerPath := createWriteLayer(writeLayerRootPath, containerID)
+	mntPath := createMountPoint(rootPath, mntRootPath, readonlyLayerPath, writeLayerPath, containerID)
 	createVolumes(mntPath, volumes)
 
 	return mntPath
@@ -94,13 +93,11 @@ func createReadOnlyLayer(imageRootPath, ImagePath string) string {
 		ImageDecompressionPath = path.Join(ImageDecompressionPath, files[0].Name())
 	}
 
-	logrus.Infof("ImageDecompressionPath: %s", ImageDecompressionPath)
-
 	return ImageDecompressionPath
 }
 
-func createWriteLayer(writeLayerRootPath, containerName string) string {
-	writeLayerPath := path.Join(writeLayerRootPath, containerName)
+func createWriteLayer(writeLayerRootPath, containerID string) string {
+	writeLayerPath := path.Join(writeLayerRootPath, containerID)
 	if err := os.Mkdir(writeLayerPath, 0777); err != nil {
 		logrus.Error("Mkdir %s error: %v", writeLayerPath, err)
 		cli.Exit(1)
@@ -108,8 +105,8 @@ func createWriteLayer(writeLayerRootPath, containerName string) string {
 	return writeLayerPath
 }
 
-func createMountPoint(rootPath, mntRootPath, readonlyLayerPath, writeLayerPath, containerName string) string {
-	mntPath := path.Join(mntRootPath, containerName)
+func createMountPoint(rootPath, mntRootPath, readonlyLayerPath, writeLayerPath, containerID string) string {
+	mntPath := path.Join(mntRootPath, containerID)
 
 	if err := os.MkdirAll(mntPath, 0777); err != nil {
 		logrus.Error("Mkdir %s error: %v", mntPath, err)
@@ -170,10 +167,10 @@ func mountVolume(mntPath string, volumeURLS []string) {
 }
 
 //Delete the AUFS filesystem while container exit
-func deleteWorkSpace(rootPath, mntPath, containerName string, volumes []string) {
+func deleteWorkSpace(rootPath, mntPath, containerID string, volumes []string) {
 	deleteVolumes(mntPath, volumes)
 	deleteMountPoint(rootPath, mntPath)
-	deleteWriteLayer(rootPath, containerName)
+	deleteWriteLayer(rootPath, containerID)
 }
 
 func deleteMountPoint(rootPath string, mntPath string) {
@@ -188,11 +185,11 @@ func deleteMountPoint(rootPath string, mntPath string) {
 	}
 }
 
-func deleteWriteLayer(rootPath, containerName string) {
-	writeLayerPath := path.Join(rootPath, "write-layers", containerName)
+func deleteWriteLayer(rootPath, containerID string) {
+	writeLayerPath := path.Join(rootPath, "write-layers", containerID)
 
 	if err := os.RemoveAll(writeLayerPath); err != nil {
-		log.Errorf("Remove dir %s error %v", writeLayerPath, err)
+		logrus.Errorf("Remove dir %s error %v", writeLayerPath, err)
 	}
 }
 
