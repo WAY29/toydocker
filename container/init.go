@@ -36,7 +36,6 @@ func RunContainerInitProcess() error {
 
 	setUpMount()
 
-	// 临时的寻找可执行程序方案，后续存在镜像后需要修改
 	if binary, err := exec.LookPath(argv[0]); err == nil {
 		argv[0] = binary
 	} else {
