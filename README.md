@@ -14,11 +14,15 @@ Ubuntu 20.04 LTS
 go build .
 
 
-## run
-### example
+## example
 ```bash
 # 执行命令
 toydocker run -t -p ./images/busybox.tar bash
 # 执行命令携带参数
 toydocker run -t -p ./images/busybox.tar -- ls -al
+# 列出容器
+toydocker ps
+# 导出容器作为镜像
+toydocker export -o ./test.tar <CONTAINER_ID>
 ```
+
