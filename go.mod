@@ -3,6 +3,7 @@ module github.com/WAY29/toydocker
 go 1.17
 
 require (
+	github.com/antonfisher/nested-logrus-formatter v1.3.1
 	github.com/jawher/mow.cli v1.2.0
 	github.com/sirupsen/logrus v1.8.1
 	modernc.org/sqlite v1.16.0

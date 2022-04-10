@@ -20,7 +20,7 @@ func NewCgroupManager(path string) *CgroupManager {
 
 // 将进程pid加入到这个cgroup中
 func (c *CgroupManager) Apply(pid int) error {
-	logrus.Infof("start apply")
+	logrus.Debugf("Start cgroup apply")
 	for _, subSysIns := range subsystems.SubsystemsIns {
 		if err := subSysIns.Apply(c.Path, pid); err != nil {
 			logrus.Error(err)
@@ -31,7 +31,7 @@ func (c *CgroupManager) Apply(pid int) error {
 
 // 设置cgroup资源限制
 func (c *CgroupManager) Set(res *subsystems.ResourceConfig) error {
-	logrus.Infof("start set")
+	logrus.Debugf("Start cgroup set")
 	for _, subSysIns := range subsystems.SubsystemsIns {
 		if err := subSysIns.Set(c.Path, res); err != nil {
 			logrus.Error(err)

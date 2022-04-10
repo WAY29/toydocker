@@ -77,7 +77,7 @@ func Run(cmdConfig *structs.CmdConfig, commandArray []string, resource *subsyste
 		logrus.Error(err)
 	}
 	pid := parent.Process.Pid
-	logrus.Infof("pid %d", pid)
+	logrus.Infof("Pid: %d", pid)
 
 	// 添加pid到cgroup,使用资源限制
 	cgroupManager.Apply(pid)

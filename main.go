@@ -4,9 +4,10 @@ import (
 	"os"
 
 	"github.com/WAY29/toydocker/cmd"
-	"github.com/sirupsen/logrus"
 
+	nested "github.com/antonfisher/nested-logrus-formatter"
 	cli "github.com/jawher/mow.cli"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -21,7 +22,10 @@ func main() {
 	app = cli.App("toydocker", "toydocker is a simple container runtime implementation.")
 
 	app.Before = func() {
-		logrus.SetFormatter(&logrus.JSONFormatter{})
+		logrus.SetFormatter(&nested.Formatter{
+			HideKeys:    true,
+			FieldsOrder: []string{"component", "category"},
+		})
 		logrus.SetOutput(os.Stdout)
 	}
 
