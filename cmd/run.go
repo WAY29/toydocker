@@ -24,7 +24,7 @@ func CmdRun(cmd *cli.Cmd) {
 		command = cmd.StringsArg("COMMAND", []string{}, "command to run")
 	)
 
-	cmd.Spec = "[-t | --tty] [-i | --interactive] [-d | --detach] [-m=<memory limit> | --memory=<memory limit>] [--cpushare=<cpushare limit>] [--cpuset=<cpuset limit>] [-v | --volume]... (-p=<image path> | --path=<iamge path>) COMMAND..."
+	cmd.Spec = "[--name] [-t | --tty] [-i | --interactive] [-d | --detach] [-m=<memory limit> | --memory=<memory limit>] [--cpushare=<cpushare limit>] [--cpuset=<cpuset limit>] [-v | --volume]... (-p=<image path> | --path=<iamge path>) COMMAND..."
 
 	cmd.Before = container.InitDatabase
 

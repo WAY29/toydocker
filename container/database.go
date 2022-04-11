@@ -104,6 +104,15 @@ func ListContainerInfo() []ContainerInfo {
 	return containerInfos
 }
 
+func updateContainerStatus(containerID, status string) {
+	updateQuery := `UPDATE ContainerInfomation SET status=?`
+	_, err := runQuery(DB, updateQuery, status)
+	if err != nil {
+		logrus.Errorf("Update Container[%s] status[%s] error: %v", containerID, status, err)
+		cli.Exit(1)
+	}
+}
+
 func findContainerID(container string) string {
 	selectQuery := `SELECT containerId FROM ContainerInfomation WHERE containerId LIKE (? ||'%') or name=?`
 	rows, err := DB.Query(selectQuery, container, container)
@@ -112,7 +121,7 @@ func findContainerID(container string) string {
 		cli.Exit(1)
 	}
 
-	var containerID string
+	var containerID string = ""
 	theOnlyFlag := false
 
 	for rows.Next() {

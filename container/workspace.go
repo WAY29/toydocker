@@ -13,33 +13,28 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+func checkErr(err error, errmsg string, args ...interface{}) {
+	if err != nil {
+		errmsg += ": %v"
+		args = append(args, err)
+		logrus.Errorf(errmsg, args...)
+		cli.Exit(1)
+	}
+}
+
 //Create a AUFS filesystem as container root workspace
 func newWorkSpace(rootPath, ImagePath, containerID string, volumes []string) string {
+	// 创建文件夹
 	mntRootPath := path.Join(rootPath, "mnt")
 	imageRootPath := path.Join(rootPath, "images")
 	writeLayerRootPath := path.Join(rootPath, "write-layers")
 	volumeRootPath := path.Join(rootPath, "volumes")
 
-	if err := os.MkdirAll(rootPath, 0777); err != nil && !os.IsExist(err) {
-		logrus.Error("Mkdir %s error: %v", rootPath, err)
-		cli.Exit(1)
-	}
-	if err := os.MkdirAll(mntRootPath, 0777); err != nil && !os.IsExist(err) {
-		logrus.Error("Mkdir %s error: %v", mntRootPath, err)
-		cli.Exit(1)
-	}
-	if err := os.MkdirAll(imageRootPath, 0777); err != nil && !os.IsExist(err) {
-		logrus.Error("Mkdir %s error: %v", imageRootPath, err)
-		cli.Exit(1)
-	}
-	if err := os.MkdirAll(writeLayerRootPath, 0777); err != nil && !os.IsExist(err) {
-		logrus.Error("Mkdir %s error: %v", writeLayerRootPath, err)
-		cli.Exit(1)
-	}
-	if err := os.MkdirAll(volumeRootPath, 0777); err != nil && !os.IsExist(err) {
-		logrus.Error("Mkdir %s error: %v", volumeRootPath, err)
-		cli.Exit(1)
-	}
+	checkErr(utils.MkdirAll(rootPath, 0755), "Mkdir %s error", rootPath)
+	checkErr(utils.MkdirAll(imageRootPath, 0755), "Mkdir %s error", imageRootPath)
+	checkErr(utils.MkdirAll(writeLayerRootPath, 0755), "Mkdir %s error", writeLayerRootPath)
+	checkErr(utils.MkdirAll(volumeRootPath, 0755), "Mkdir %s error", volumeRootPath)
+
 	readonlyLayerPath := createReadOnlyLayer(imageRootPath, ImagePath)
 	writeLayerPath := createWriteLayer(writeLayerRootPath, containerID)
 	mntPath := createMountPoint(rootPath, mntRootPath, readonlyLayerPath, writeLayerPath, containerID)
@@ -98,20 +93,15 @@ func createReadOnlyLayer(imageRootPath, ImagePath string) string {
 
 func createWriteLayer(writeLayerRootPath, containerID string) string {
 	writeLayerPath := path.Join(writeLayerRootPath, containerID)
-	if err := os.Mkdir(writeLayerPath, 0777); err != nil {
-		logrus.Error("Mkdir %s error: %v", writeLayerPath, err)
-		cli.Exit(1)
-	}
+	checkErr(utils.MkdirAll(writeLayerPath, 0755), "Mkdir %s error", writeLayerPath)
+
 	return writeLayerPath
 }
 
 func createMountPoint(rootPath, mntRootPath, readonlyLayerPath, writeLayerPath, containerID string) string {
 	mntPath := path.Join(mntRootPath, containerID)
 
-	if err := os.MkdirAll(mntPath, 0777); err != nil {
-		logrus.Error("Mkdir %s error: %v", mntPath, err)
-		cli.Exit(1)
-	}
+	checkErr(utils.MkdirAll(mntPath, 0755), "Mkdir %s error", mntPath)
 
 	syscall.Mount("", "/", "", syscall.MS_PRIVATE|syscall.MS_REC, "")
 	if err := syscall.Mount("none", mntPath, "aufs", uintptr(syscall.MS_NODEV), fmt.Sprintf("dirs=%s:%s", writeLayerPath, readonlyLayerPath)); err != nil {
@@ -149,15 +139,10 @@ func volumeURLExtract(volume string) ([]string, bool) {
 
 func mountVolume(mntPath string, volumeURLS []string) {
 	parentPath := volumeURLS[0]
-	if err := os.Mkdir(parentPath, 0777); err != nil && !os.IsExist(err) {
-		logrus.Errorf("Mkdir parent dir %s error: %v", parentPath, err)
-		cli.Exit(1)
-	}
+	checkErr(utils.MkdirAll(parentPath, 0755), "Mkdir parent dir %s error", parentPath)
+
 	containerVolumePath := path.Join(mntPath, volumeURLS[1])
-	if err := os.Mkdir(containerVolumePath, 0777); err != nil && !os.IsExist(err) {
-		logrus.Error("Mkdir container dir %s error: %v", containerVolumePath, err)
-		cli.Exit(1)
-	}
+	checkErr(utils.MkdirAll(containerVolumePath, 0755), "Mkdir container dir %s error", containerVolumePath)
 
 	syscall.Mount("", "/", "", syscall.MS_PRIVATE|syscall.MS_REC, "")
 	if err := syscall.Mount("none", containerVolumePath, "aufs", uintptr(syscall.MS_NODEV), fmt.Sprintf("dirs=%s", parentPath)); err != nil {

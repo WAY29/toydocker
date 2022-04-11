@@ -17,7 +17,7 @@ func (s *CpusetSubSystem) GetCgroupPath(subsystem string, cgroupPath string, aut
 	if s.cgroupPath != "" {
 		return s.cgroupPath, nil
 	} else {
-		cgroupPath, err := getCgroupPath(s.Name(), cgroupPath, true)
+		cgroupPath, err := getCgroupPath(subsystem, cgroupPath, true)
 		s.cgroupPath = cgroupPath
 		return cgroupPath, err
 	}
@@ -25,10 +25,35 @@ func (s *CpusetSubSystem) GetCgroupPath(subsystem string, cgroupPath string, aut
 
 // 设置某个cgroup在这个subsystem中的资源限制
 func (s *CpusetSubSystem) Set(cgroupPath string, res *ResourceConfig) error {
-	if subsysCgroupPath, err := s.GetCgroupPath(s.Name(), cgroupPath, true); err == nil {
+	var (
+		content          []byte
+		err              error
+		subsysCgroupPath string
+	)
+	cgroupMountPointPath := FindCgroupMountpoint(s.Name())
+
+	if subsysCgroupPath, err = s.GetCgroupPath(s.Name(), cgroupPath, true); err == nil {
+		defaultMemsPath := path.Join(cgroupMountPointPath, "cpuset.mems")
+		content, err = ioutil.ReadFile(defaultMemsPath)
+		if err != nil {
+			return fmt.Errorf("Set cgroup cpuset.mems error: %v", err)
+		}
+		if err = ioutil.WriteFile(path.Join(subsysCgroupPath, "cpuset.mems"), []byte(content), 0644); err != nil {
+			return fmt.Errorf("Set cgroup cpuset.mems error: %v", err)
+		}
+
 		if res.CpuSet != "" {
 			if err := ioutil.WriteFile(path.Join(subsysCgroupPath, "cpuset.cpus"), []byte(res.CpuSet), 0644); err != nil {
-				return fmt.Errorf("set cgroup cpuset fail %v", err)
+				return fmt.Errorf("Set cgroup cpuset.cpus error: %v", err)
+			}
+		} else {
+			defaultCpusPath := path.Join(cgroupMountPointPath, "cpuset.cpus")
+			content, err = ioutil.ReadFile(defaultCpusPath)
+			if err != nil {
+				return fmt.Errorf("Set cgroup cpuset.cpus error: %v", err)
+			}
+			if err = ioutil.WriteFile(path.Join(subsysCgroupPath, "cpuset.cpus"), []byte(content), 0644); err != nil {
+				return fmt.Errorf("Set cgroup cpuset.cpus error: %v", err)
 			}
 		}
 		return nil

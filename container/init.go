@@ -57,7 +57,6 @@ func setUpMount() {
 		logrus.Errorf("Get current location error: %v", err)
 		return
 	}
-	logrus.Infof("Current location is %s", pwd)
 	pivotRoot(pwd)
 
 	//mount proc

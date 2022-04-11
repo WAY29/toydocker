@@ -17,7 +17,7 @@ func (s *CpuSubSystem) GetCgroupPath(subsystem string, cgroupPath string, autoCr
 	if s.cgroupPath != "" {
 		return s.cgroupPath, nil
 	} else {
-		cgroupPath, err := getCgroupPath(s.Name(), cgroupPath, true)
+		cgroupPath, err := getCgroupPath(subsystem, cgroupPath, true)
 		s.cgroupPath = cgroupPath
 		return cgroupPath, err
 	}

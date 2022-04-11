@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path"
@@ -19,6 +20,23 @@ func PathExists(path string) (bool, error) {
 		return false, nil
 	}
 	return false, err
+}
+
+func MkdirAll(path string, perm fs.FileMode) error {
+	var (
+		ok  bool
+		err error
+	)
+
+	if ok, err = PathExists(path); err != nil {
+		return err
+	} else if !ok {
+		if err := os.MkdirAll(path, 0755); err != nil && !os.IsExist(err) {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func FileHash(filepath string) (string, error) {
