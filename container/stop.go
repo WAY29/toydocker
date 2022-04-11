@@ -23,7 +23,7 @@ func StopContainer(containers []string) {
 			cli.Exit(1)
 		}
 		if err = syscall.Kill(pidInt, syscall.SIGTERM); err != nil {
-			logrus.Errorf("Stop pid %d: %v", pidInt, err)
+			logrus.Errorf("Stop pid %d error: %v", pidInt, err)
 			cli.Exit(1)
 		}
 
