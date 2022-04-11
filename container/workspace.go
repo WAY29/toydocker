@@ -154,11 +154,11 @@ func mountVolume(mntPath string, volumeURLS []string) {
 //Delete the AUFS filesystem while container exit
 func deleteWorkSpace(rootPath, mntPath, containerID string, volumes []string) {
 	deleteVolumes(mntPath, volumes)
-	deleteMountPoint(rootPath, mntPath)
+	deleteMountPoint(mntPath)
 	deleteWriteLayer(rootPath, containerID)
 }
 
-func deleteMountPoint(rootPath string, mntPath string) {
+func deleteMountPoint(mntPath string) {
 	if err := syscall.Unmount(mntPath, 0); err != nil {
 		logrus.Errorf("Unmount %s error: %v", mntPath, err)
 		cli.Exit(1)

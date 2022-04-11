@@ -28,7 +28,8 @@ func StopContainer(containers []string) {
 		}
 
 		updateContainerPID(containerID, "-1")
+		updateContainerStatus(containerID, PROC_STATUS_EXIT)
 
-		fmt.Printf("%s\n", pid)
+		fmt.Printf("%s\n", containerID)
 	}
 }

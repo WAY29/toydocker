@@ -1,6 +1,8 @@
 package cgroups
 
 import (
+	"os"
+
 	"github.com/WAY29/toydocker/cgroups/subsystems"
 	"github.com/sirupsen/logrus"
 )
@@ -43,8 +45,8 @@ func (c *CgroupManager) Set(res *subsystems.ResourceConfig) error {
 //释放cgroup
 func (c *CgroupManager) Destroy() error {
 	for _, subSysIns := range subsystems.SubsystemsIns {
-		if err := subSysIns.Remove(c.Path); err != nil {
-			logrus.Warnf("remove cgroup fail %v", err)
+		if err := subSysIns.Remove(c.Path); err != nil && !os.IsNotExist(err) {
+			logrus.Warnf("remove cgroup error: %v", err)
 		}
 	}
 	return nil

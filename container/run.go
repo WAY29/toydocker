@@ -80,6 +80,11 @@ func newParentProcess(ttyFlag, interactiveFlag, detachFlag bool, commandArray []
 }
 
 func Run(cmdConfig *structs.CmdConfig, commandArray []string, resource *subsystems.ResourceConfig) {
+	// 不允许相同名字的容器
+	if !findContainerNameNotExist(cmdConfig.Name) {
+		logrus.Errorf("A container with the same name[%s] exists", cmdConfig.Name)
+		cli.Exit(1)
+	}
 	// 创建日志目录
 	logRootPath := path.Join(ROOT_PATH, "logs")
 	checkErr(utils.MkdirAll(logRootPath, 0622), "Mkdir %s error", logRootPath)
@@ -92,9 +97,7 @@ func Run(cmdConfig *structs.CmdConfig, commandArray []string, resource *subsyste
 
 	// 创建workspace
 	mntPath := newWorkSpace(ROOT_PATH, cmdConfig.ImagePath, containerID, cmdConfig.Volume)
-	// if !cmdConfig.Detach {
-	// 	defer deleteWorkSpace(ROOT_PATH, mntPath, containerID, cmdConfig.Volume)
-	// }
+
 	// 设置新的文件系统根目录
 	parent.Dir = mntPath
 
@@ -168,6 +171,7 @@ func Run(cmdConfig *structs.CmdConfig, commandArray []string, resource *subsyste
 		Command:     command,
 		CreateTime:  time.Now().Format("2006-01-02 15:04:05"),
 		ImagePath:   cmdConfig.ImagePath,
+		Volumes:     cmdConfig.Volume,
 		Ports:       "",
 		Status:      PROC_STATUS_RUNNING,
 		Name:        cmdConfig.Name,

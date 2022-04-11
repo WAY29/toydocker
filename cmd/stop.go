@@ -18,7 +18,6 @@ func CmdStop(cmd *cli.Cmd) {
 
 	cmd.Action = func() {
 		container.StopContainer(*containersID)
-		// container.ExecContainer(*containerID, *command)
 	}
 
 }

@@ -50,7 +50,7 @@ func getProcStatus(pid int) string {
 func ListContainers() {
 	var status string
 
-	containerInfos := ListContainerInfo()
+	containerInfos := listContainerInfo()
 
 	w := tabwriter.NewWriter(os.Stdout, 5, 30, 1, ' ', 0)
 	fmt.Fprintln(w, "CONTAINER_ID\tPID\tIMAGE\tCOMMAND\tCREATED_TIME\tSTATUS\tPORTS\tNAMES")
