@@ -16,12 +16,20 @@ go build .
 
 ## example
 ```bash
-# 执行命令
+# 启动容器并执行命令
 toydocker run -t -p ./images/busybox.tar bash
-# 执行命令携带参数
+# 启动容器并执行命令执行命令，携带参数
 toydocker run -t -p ./images/busybox.tar -- ls -al
+# 在已允许的容器中执行命令
+toydocker exec <CONTAINER_ID> sh
 # 列出容器
 toydocker ps
+# 查看容器日志
+toydocker logs <CONTAINER_ID>
+# 停止容器
+toydocker stop <CONTAINER_ID>
+# 删除容器
+toydocker rm <CONTAINER_ID>
 # 导出容器作为镜像
 toydocker export -o ./test.tar <CONTAINER_ID>
 ```
