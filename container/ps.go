@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strconv"
 	"text/tabwriter"
 
 	cli "github.com/jawher/mow.cli"
@@ -56,8 +57,12 @@ func ListContainers() {
 
 	for _, containerInfo := range containerInfos {
 		status = getProcStatus(containerInfo.Pid)
+		pid := strconv.Itoa(containerInfo.Pid)
+		if pid == "-1" {
+			pid = ""
+		}
 
-		fmt.Fprintf(w, "%s\t%d\t%s\t%s\t%s\t%s\t%s\t%s\n", containerInfo.ContainerId, containerInfo.Pid, containerInfo.ImagePath, containerInfo.Command, containerInfo.CreateTime, status, containerInfo.Ports, containerInfo.Name)
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", containerInfo.ContainerId, pid, containerInfo.ImagePath, containerInfo.Command, containerInfo.CreateTime, status, containerInfo.Ports, containerInfo.Name)
 
 		if status != containerInfo.Status {
 			updateContainerStatus(containerInfo.ContainerId, status)

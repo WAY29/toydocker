@@ -32,6 +32,7 @@ func main() {
 	app.Command("init", "Init container process run user's process in container. Do not call it outside", cmd.CmdInit)
 	app.Command("run", "Create a container with namespace and cgroups", cmd.CmdRun)
 	app.Command("exec", "Run a command in a running container", cmd.CmdExec)
+	app.Command("stop", "Stop one or more running containers", cmd.CmdStop)
 	app.Command("export", "Export a container's filesystem as a tar archive", cmd.CmdExport)
 	app.Command("logs", "Fetch the logs of a container", cmd.CmdLogs)
 	app.Command("ps", "List containers", cmd.CmdPS)

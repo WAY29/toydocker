@@ -108,24 +108,38 @@ func ListContainerInfo() []ContainerInfo {
 	return containerInfos
 }
 
-func updateContainerStatus(containerID, status string) {
-	updateQuery := `UPDATE ContainerInfomation SET status=?`
-	_, err := runQuery(DB, updateQuery, status)
+func updateContainerProperty(containerID, property, value string) {
+	updateQuery := fmt.Sprintf(`UPDATE ContainerInfomation SET %s=?`, property)
+	_, err := runQuery(DB, updateQuery, value)
 	if err != nil {
-		logrus.Errorf("Update Container[%s] status[%s] error: %v", containerID, status, err)
+		logrus.Errorf("Update Container[%s] status[%s] error: %v", containerID, value, err)
 		cli.Exit(1)
 	}
 }
 
-func findContainerInfo(container, property string) string {
-	selectQuery := fmt.Sprintf("SELECT %s FROM ContainerInfomation WHERE containerId LIKE (? ||'%%') or name=?", property)
+func updateContainerStatus(containerID, status string) {
+	updateContainerProperty(containerID, "status", status)
+}
+
+func updateContainerPID(containerID, pid string) {
+	updateContainerProperty(containerID, "pid", pid)
+}
+
+func findContainerProperty(container string, properties ...string) []string {
+	propertieStr := strings.Join(properties, ",")
+
+	selectQuery := fmt.Sprintf("SELECT %s FROM ContainerInfomation WHERE containerId LIKE (? ||'%%') or name=?", propertieStr)
 	rows, err := DB.Query(selectQuery, container, container)
 	if err != nil {
 		logrus.Errorf("List ContainerInfo error: %v", err)
 		cli.Exit(1)
 	}
 
-	var value string = ""
+	values := make([]string, len(properties))
+	scans := make([]interface{}, len(properties))
+	for i := range scans {
+		scans[i] = &values[i]
+	}
 	theOnlyFlag := false
 
 	for rows.Next() {
@@ -135,24 +149,36 @@ func findContainerInfo(container, property string) string {
 			logrus.Errorf("Ambiguous container id or name: %s", container)
 			cli.Exit(1)
 		}
-		err = rows.Scan(&value)
+		err = rows.Scan(scans...)
 		if err != nil {
 			logrus.Errorf("Get ContainerInfo from db error: %v", err)
 			cli.Exit(1)
 		}
 	}
 
-	return value
+	return values
 
 }
 
 func findContainerPID(container string) string {
-	return findContainerInfo(container, "pid")
+	if result := findContainerProperty(container, "pid"); len(result) > 0 {
+		return result[0]
+	}
+	return ""
 }
 
 func findContainerID(container string) string {
-	return findContainerInfo(container, "containerID")
+	if result := findContainerProperty(container, "containerID"); len(result) > 0 {
+		return result[0]
+	}
+	return ""
+}
 
+func findContainerIDAndPID(container string) (string, string) {
+	if result := findContainerProperty(container, "containerID", "pid"); len(result) > 0 {
+		return result[0], result[1]
+	}
+	return "", ""
 }
 
 func runQuery(db *sql.DB, query string, args ...interface{}) (sql.Result, error) {
