@@ -25,9 +25,12 @@ type ContainerInfo struct {
 }
 
 const (
-	RUNNING = "Running"
-	STOP    = "Stop"
-	EXIT    = "Exit"
+	PROC_STATUS_RUNNING  = "Running"
+	PROC_STATUS_SLEEPING = "Sleeping"
+	PROC_STATUS_STOP     = "Stop"
+	PROC_STATUS_EXIT     = "Exited"
+	PROC_STATUS_ZOMBIE   = "Zombie"
+	PROC_STATUS_DEAD     = "Dead"
 )
 
 var (
