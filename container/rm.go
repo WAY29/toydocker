@@ -2,6 +2,7 @@ package container
 
 import (
 	"fmt"
+	"os"
 	"path"
 	"strings"
 
@@ -37,6 +38,13 @@ func RemoveContainer(containers []string, force bool) {
 		// 删除workspace
 		mntPath := path.Join(ROOT_PATH, "mnt", containerID)
 		deleteWorkSpace(ROOT_PATH, mntPath, containerID, volumes)
+
+		// 删除日志
+		logPath := path.Join(ROOT_PATH, "logs", containerID)
+		if err := os.RemoveAll(logPath); err != nil && !os.IsNotExist(err) {
+			logrus.Errorf("Remove log error: %v", err)
+			cli.Exit(1)
+		}
 
 		// 删除记录
 		if err := deleteContainerInfo(containerID); err != nil {
