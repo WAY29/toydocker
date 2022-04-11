@@ -1,7 +1,7 @@
 package subsystems
 
-var SubsystemsIns = []SubSystem{
-	&MemorySubSystem{cgroupPath: ""},
-	&CpuSubSystem{cgroupPath: ""},
-	&CpusetSubSystem{cgroupPath: ""},
+var SubsystemsIns = map[string]SubSystem{
+	"memory": &MemorySubSystem{cgroupPath: ""},
+	"cpu":    &CpuSubSystem{cgroupPath: ""},
+	"cpuset": &CpusetSubSystem{cgroupPath: ""},
 }

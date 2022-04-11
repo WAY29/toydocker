@@ -100,9 +100,16 @@ func Run(cmdConfig *structs.CmdConfig, commandArray []string, resource *subsyste
 
 	// 创建cgroup manager，并调用set和apply设置资源限制
 	cgroupManager := cgroups.NewCgroupManager(containerID)
-	// if !cmdConfig.Detach {
-	// 	defer cgroupManager.Destroy()
-	// }
+	if resource.MemoryLimit == "" {
+		delete(subsystems.SubsystemsIns, "memory")
+	}
+	if resource.CpuShare == "" {
+		delete(subsystems.SubsystemsIns, "cpu")
+	}
+	if resource.CpuSet == "" {
+		delete(subsystems.SubsystemsIns, "cpuset")
+	}
+
 	// 设置cgroup资源限制
 	cgroupManager.Set(resource)
 
@@ -162,13 +169,13 @@ func Run(cmdConfig *structs.CmdConfig, commandArray []string, resource *subsyste
 		CreateTime:  time.Now().Format("2006-01-02 15:04:05"),
 		ImagePath:   cmdConfig.ImagePath,
 		Ports:       "",
-		Status:      RUNNING,
+		Status:      PROC_STATUS_RUNNING,
 		Name:        cmdConfig.Name,
 	})
 
 	// 若非放到后台运行则等待进程
 	if !cmdConfig.Detach {
-		defer updateContainerStatus(containerID, EXIT)
+		defer updateContainerStatus(containerID, PROC_STATUS_EXIT)
 		parent.Wait()
 	} else {
 		// 否则输出containerID
