@@ -2,6 +2,7 @@ package container
 
 import (
 	"database/sql"
+	"fmt"
 	"path"
 	"strings"
 
@@ -113,15 +114,15 @@ func updateContainerStatus(containerID, status string) {
 	}
 }
 
-func findContainerID(container string) string {
-	selectQuery := `SELECT containerId FROM ContainerInfomation WHERE containerId LIKE (? ||'%') or name=?`
+func findContainerInfo(container, property string) string {
+	selectQuery := fmt.Sprintf("SELECT %s FROM ContainerInfomation WHERE containerId LIKE (? ||'%%') or name=?", property)
 	rows, err := DB.Query(selectQuery, container, container)
 	if err != nil {
 		logrus.Errorf("List ContainerInfo error: %v", err)
 		cli.Exit(1)
 	}
 
-	var containerID string = ""
+	var value string = ""
 	theOnlyFlag := false
 
 	for rows.Next() {
@@ -131,14 +132,24 @@ func findContainerID(container string) string {
 			logrus.Errorf("Ambiguous container id or name: %s", container)
 			cli.Exit(1)
 		}
-		err = rows.Scan(&containerID)
+		err = rows.Scan(&value)
 		if err != nil {
 			logrus.Errorf("Get ContainerInfo from db error: %v", err)
 			cli.Exit(1)
 		}
 	}
 
-	return containerID
+	return value
+
+}
+
+func findContainerPID(container string) string {
+	return findContainerInfo(container, "pid")
+}
+
+func findContainerID(container string) string {
+	return findContainerInfo(container, "containerID")
+
 }
 
 func runQuery(db *sql.DB, query string, args ...interface{}) (sql.Result, error) {

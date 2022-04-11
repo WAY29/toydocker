@@ -165,10 +165,10 @@ func Run(cmdConfig *structs.CmdConfig, commandArray []string, resource *subsyste
 		Status:      RUNNING,
 		Name:        cmdConfig.Name,
 	})
-	defer updateContainerStatus(containerID, EXIT)
 
 	// 若非放到后台运行则等待进程
 	if !cmdConfig.Detach {
+		defer updateContainerStatus(containerID, EXIT)
 		parent.Wait()
 	} else {
 		// 否则输出containerID
@@ -178,8 +178,8 @@ func Run(cmdConfig *structs.CmdConfig, commandArray []string, resource *subsyste
 }
 
 // 使用管道传输命令参数
-func sendInitCommand(comArray []string, writePipe *os.File) string {
-	command := strings.Join(comArray, " ")
+func sendInitCommand(commandArray []string, writePipe *os.File) string {
+	command := strings.Join(commandArray, " ")
 	writePipe.WriteString(command)
 	writePipe.Close()
 

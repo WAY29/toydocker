@@ -21,7 +21,7 @@ func CmdRun(cmd *cli.Cmd) {
 	)
 
 	var (
-		command = cmd.StringsArg("COMMAND", []string{}, "command to run")
+		command = cmd.StringsArg("COMMAND", []string{}, "Command to run")
 	)
 
 	cmd.Spec = "[--name] [-t | --tty] [-i | --interactive] [-d | --detach] [-m=<memory limit> | --memory=<memory limit>] [--cpushare=<cpushare limit>] [--cpuset=<cpuset limit>] [-v | --volume]... (-p=<image path> | --path=<iamge path>) COMMAND..."
