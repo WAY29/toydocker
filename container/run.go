@@ -32,7 +32,7 @@ func newPipe() (*os.File, *os.File, error) {
 }
 
 // fork自身并创建namespace隔离
-func newParentProcess(ttyFlag, interactiveFlag, detachFlag bool, commandArray []string, containerID string) (*exec.Cmd, *os.File, *io.Writer) {
+func newParentProcess(ttyFlag, interactiveFlag, detachFlag bool, commandArray []string, containerID string, envs []string) (*exec.Cmd, *os.File, *io.Writer) {
 	readPipe, writePipe, err := newPipe()
 	if err != nil {
 		logrus.Errorf("New pipe error: %v", err)
@@ -75,11 +75,12 @@ func newParentProcess(ttyFlag, interactiveFlag, detachFlag bool, commandArray []
 	}
 
 	cmd.ExtraFiles = []*os.File{readPipe}
+	cmd.Env = append(os.Environ(), envs...)
 
 	return cmd, writePipe, &stdoutWriter
 }
 
-func Run(cmdConfig *structs.CmdConfig, commandArray []string, resource *subsystems.ResourceConfig) {
+func Run(cmdConfig *structs.CmdRunConfig, commandArray []string, resource *subsystems.ResourceConfig) {
 	// 不允许相同名字的容器
 	if !findContainerNameNotExist(cmdConfig.Name) {
 		logrus.Errorf("A container with the same name[%s] exists", cmdConfig.Name)
@@ -93,7 +94,7 @@ func Run(cmdConfig *structs.CmdConfig, commandArray []string, resource *subsyste
 	containerID := utils.RandStr(12)
 	logrus.Infof("containterID: %s", containerID)
 
-	parent, writePipe, stdoutWriter := newParentProcess(cmdConfig.Tty, cmdConfig.Interactive, cmdConfig.Detach, commandArray, containerID)
+	parent, writePipe, stdoutWriter := newParentProcess(cmdConfig.Tty, cmdConfig.Interactive, cmdConfig.Detach, commandArray, containerID, cmdConfig.Env)
 
 	// 创建workspace
 	mntPath := newWorkSpace(ROOT_PATH, cmdConfig.ImagePath, containerID, cmdConfig.Volume)

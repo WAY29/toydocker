@@ -1,6 +1,8 @@
 package container
 
 import (
+	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
@@ -9,7 +11,18 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func ExecContainer(container string, commandArray []string) {
+func getEnvsByPid(pid string) []string {
+	path := fmt.Sprintf("/proc/%s/environ", pid)
+	content, err := ioutil.ReadFile(path)
+	if err != nil {
+		logrus.Errorf("Read file %s error: %v", path, err)
+		return nil
+	}
+	envs := strings.Split(string(content), "\u0000")
+	return envs
+}
+
+func ExecContainer(container string, commandArray, envs []string) {
 	pid := findContainerPID(container)
 	if pid == "" {
 		logrus.Warningf("No such container: %s", container)
@@ -23,6 +36,9 @@ func ExecContainer(container string, commandArray []string) {
 
 	os.Setenv(ENV_EXEC_PID, pid)
 	os.Setenv(ENV_EXEC_CMD, commandStr)
+	containerEnvs := getEnvsByPid(pid)
+	cmd.Env = append(os.Environ(), envs...)
+	cmd.Env = append(cmd.Env, containerEnvs...)
 
 	if err := cmd.Run(); err != nil {
 		logrus.Error(err)

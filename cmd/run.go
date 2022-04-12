@@ -18,13 +18,14 @@ func CmdRun(cmd *cli.Cmd) {
 		cpuset      = cmd.StringOpt("cpuset", "", "cpuset limit")
 		imagePath   = cmd.StringOpt("p path", "./images/busybox.tar", "Specifies the path of the image")
 		volume      = cmd.StringsOpt("v volume", []string{}, "Bind mount a volume")
+		envs        = cmd.StringsOpt("e env", []string{}, "Set environment variables")
 	)
 
 	var (
 		command = cmd.StringsArg("COMMAND", []string{}, "Command to run")
 	)
 
-	cmd.Spec = "[--name] [-t | --tty] [-i | --interactive] [-d | --detach] [-m=<memory limit> | --memory=<memory limit>] [--cpushare=<cpushare limit>] [--cpuset=<cpuset limit>] [-v | --volume]... (-p=<image path> | --path=<iamge path>) COMMAND..."
+	cmd.Spec = "[--name] [-t | --tty] [-i | --interactive] [-d | --detach] [-m=<memory limit> | --memory=<memory limit>] [--cpushare=<cpushare limit>] [--cpuset=<cpuset limit>] [-v | --volume]... [-e | --env]... (-p=<image path> | --path=<iamge path>) COMMAND..."
 
 	cmd.Before = container.InitDatabase
 
@@ -35,13 +36,14 @@ func CmdRun(cmd *cli.Cmd) {
 			CpuSet:      *cpuset,
 		}
 
-		cmdConfig := &structs.CmdConfig{
+		cmdConfig := &structs.CmdRunConfig{
 			Name:        *name,
 			Tty:         *tty,
 			Interactive: *interactive,
 			Detach:      *detach,
 			ImagePath:   *imagePath,
 			Volume:      *volume,
+			Env:         *envs,
 		}
 
 		container.Run(cmdConfig, *command, resource)

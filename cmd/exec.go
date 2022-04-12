@@ -14,9 +14,10 @@ func CmdExec(cmd *cli.Cmd) {
 	var (
 		containerID = cmd.StringArg("CONTAINER", "", "Container name or id")
 		command     = cmd.StringsArg("COMMAND", []string{}, "Command to run")
+		envs        = cmd.StringsOpt("e env", []string{}, "Set environment variables")
 	)
 
-	cmd.Spec = "CONTAINER COMMAND..."
+	cmd.Spec = "[-e | --env]... CONTAINER COMMAND..."
 
 	cmd.Before = container.InitDatabase
 
@@ -25,7 +26,7 @@ func CmdExec(cmd *cli.Cmd) {
 		if os.Getenv(container.ENV_EXEC_CMD) != "" || os.Getenv(container.ENV_EXEC_PID) != "" {
 			return
 		}
-		container.ExecContainer(*containerID, *command)
+		container.ExecContainer(*containerID, *command, *envs)
 	}
 
 }
