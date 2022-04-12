@@ -35,7 +35,7 @@ func newPipe() (*os.File, *os.File, error) {
 func newParentProcess(ttyFlag, interactiveFlag, detachFlag bool, commandArray []string, containerID string) (*exec.Cmd, *os.File, *io.Writer) {
 	readPipe, writePipe, err := newPipe()
 	if err != nil {
-		logrus.Errorf("New pipe error %v", err)
+		logrus.Errorf("New pipe error: %v", err)
 		return nil, nil, nil
 	}
 
