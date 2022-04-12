@@ -16,6 +16,8 @@ func CmdExport(cmd *cli.Cmd) {
 
 	cmd.Spec = "(-o=<output filepath> | --output=<output filepath>) CONTAINER"
 
+	cmd.Before = container.InitDatabase
+
 	cmd.Action = func() {
 		container.ExportContainer(*output, *containerID)
 	}
