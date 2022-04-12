@@ -29,12 +29,12 @@ func RunContainerInitProcess() error {
 		err error
 	)
 
+	setUpMount()
+
 	argv := readUserCommand()
 	if argv == nil || len(argv) == 0 {
 		return fmt.Errorf("Run container get user command error, cmdArray is nil")
 	}
-
-	setUpMount()
 
 	if binary, err := exec.LookPath(argv[0]); err == nil {
 		argv[0] = binary
@@ -63,8 +63,9 @@ func setUpMount() {
 	syscall.Mount("", "/", "", syscall.MS_PRIVATE|syscall.MS_REC, "")
 	defaultMountFlags := syscall.MS_NOEXEC | syscall.MS_NOSUID | syscall.MS_NODEV
 	syscall.Mount("proc", "/proc", "proc", uintptr(defaultMountFlags), "")
+	syscall.Mount("none", "/dev", "devtmpfs", syscall.MS_SILENT, "")
+	syscall.Mount("devpts", "/dev/pts", "devpts", 0, "mode=620")
 
-	syscall.Mount("tmpfs", "/dev", "tmpfs", syscall.MS_NOSUID|syscall.MS_STRICTATIME, "mode=755")
 }
 
 // 挂载文件系统
